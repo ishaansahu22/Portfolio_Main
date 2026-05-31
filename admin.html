@@ -98,6 +98,7 @@
       <button class="nav-btn" data-target="sec-skills">Skills</button>
       <button class="nav-btn" data-target="sec-experience">Experience</button>
       <button class="nav-btn" data-target="sec-settings">Site Settings</button>
+      <button class="nav-btn" data-target="sec-visitors" id="nav-btn-visitors">Visitors Log</button>
       <button class="nav-btn logout-btn" id="logout-btn">Log Out</button>
     </div>
     
@@ -198,6 +199,47 @@
           <input type="text" id="set-footer">
         </div>
         <button class="btn save-btn" data-section="settings">Save Changes</button>
+      </div>
+
+      <!-- Visitors Section -->
+      <div id="sec-visitors" class="section-view">
+        <h1>Silent Visitor Analytics</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Tracking is entirely invisible to public visitors.</p>
+        
+        <!-- Stats Row -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--card-border);">
+            <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Total Visits</div>
+            <div id="visitor-total" style="font-size: 2.2rem; font-weight: bold; color: var(--accent);">0</div>
+          </div>
+          <div style="background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--card-border);">
+            <div style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.5rem;">Unique Visitors (IPs)</div>
+            <div id="visitor-unique" style="font-size: 2.2rem; font-weight: bold; color: #10b981;">0</div>
+          </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div style="background: var(--surface); border: 1px solid var(--card-border); border-radius: 8px; overflow: hidden;">
+          <div style="padding: 1.2rem; font-weight: 600; border-bottom: 1px solid var(--card-border); display: flex; justify-content: space-between; align-items: center;">
+            <span>Visit History</span>
+            <button class="btn btn-outline" style="width: auto; padding: 0.4rem 1rem; font-size: 0.85rem;" onclick="adminApp.loadVisitors()">Refresh Logs</button>
+          </div>
+          <div style="overflow-x: auto; max-height: 480px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: var(--surface-hover); color: var(--text-muted); border-bottom: 1px solid var(--card-border);">
+                  <th style="padding: 1rem;">IP Address</th>
+                  <th style="padding: 1rem;">Page</th>
+                  <th style="padding: 1rem;">Timestamp</th>
+                  <th style="padding: 1rem; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Client (Browser/OS)</th>
+                </tr>
+              </thead>
+              <tbody id="visitor-log-rows">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
     </div>

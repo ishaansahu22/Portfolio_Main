@@ -61,7 +61,11 @@ const adminApp = (() => {
         DOM.navBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         DOM.sections.forEach(s => s.classList.remove('active'));
-        document.getElementById(btn.dataset.target).classList.add('active');
+        const targetId = btn.dataset.target;
+        document.getElementById(targetId).classList.add('active');
+        if (targetId === 'sec-visitors') {
+          loadVisitors();
+        }
       });
     });
 
@@ -380,7 +384,71 @@ const adminApp = (() => {
     }
   }
 
+  async function loadVisitors() {
+    try {
+      const rowsContainer = document.getElementById('visitor-log-rows');
+      rowsContainer.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">Retrieving real-time logs...</td></tr>';
+
+      const res = await fetch('/api/visitors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (!res.ok) {
+        throw new Error('Unauthorized or failed connection');
+      }
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to parse logs');
+      }
+
+      const logs = data.logs || [];
+      document.getElementById('visitor-total').textContent = logs.length;
+      
+      const uniqueIps = new Set(logs.map(log => log.ip));
+      document.getElementById('visitor-unique').textContent = uniqueIps.size;
+
+      if (logs.length === 0) {
+        rowsContainer.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">No visits recorded yet.</td></tr>';
+        return;
+      }
+
+      rowsContainer.innerHTML = logs.map(log => {
+        const date = new Date(log.timestamp).toLocaleString();
+        
+        // Simple human-friendly parser for common OS / Browser from User Agent
+        let client = 'Unknown Client';
+        const ua = log.userAgent || '';
+        if (ua.includes('Windows')) client = 'Windows';
+        else if (ua.includes('Macintosh')) client = 'macOS';
+        else if (ua.includes('iPhone') || ua.includes('iPad')) client = 'iOS Device';
+        else if (ua.includes('Android')) client = 'Android Device';
+        else if (ua.includes('Linux')) client = 'Linux';
+        
+        if (ua.includes('Chrome')) client += ' • Chrome';
+        else if (ua.includes('Safari')) client += ' • Safari';
+        else if (ua.includes('Firefox')) client += ' • Firefox';
+        else if (ua.includes('Edge')) client += ' • Edge';
+
+        return `
+          <tr style="border-bottom: 1px solid var(--card-border); hover:background: var(--surface-hover);">
+            <td style="padding: 1rem; font-family: monospace; color: var(--accent); font-weight: 500;">${log.ip}</td>
+            <td style="padding: 1rem;"><span style="background: rgba(212,168,67,0.1); color: #d4a843; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${log.page}</span></td>
+            <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;">${date}</td>
+            <td style="padding: 1rem; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${ua}">${client}</td>
+          </tr>
+        `;
+      }).join('');
+
+    } catch(e) {
+      showToast("Failed to fetch visitors logs", true);
+      document.getElementById('visitor-log-rows').innerHTML = `<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--accent-danger);">Error: ${e.message}</td></tr>`;
+    }
+  }
+
   init();
 
-  return { addRole, removeRole, togglePin, addSkillCategory, deleteSkillCat, addExperience, deleteExp };
+  return { addRole, removeRole, togglePin, addSkillCategory, deleteSkillCat, addExperience, deleteExp, loadVisitors };
 })();
