@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           if(hidden.includes(repo.name)) return;
           
           const html = `
-            <a href="${repo.html_url}" target="_blank" class="small-card reveal">
+            <a href="${repo.html_url}" target="_blank" class="small-card">
               <div class="small-card-title">
                 ${repo.name}
                 <span>🔗</span>
@@ -191,6 +191,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch(e) {
       console.log("Error fetching GH repos", e);
     }
+
+    // Observe any dynamically-added .reveal elements (featured project cards)
+    featuredContainer.querySelectorAll('.reveal').forEach(el => {
+      if (window._portfolioObserver) {
+        window._portfolioObserver.observe(el);
+      } else {
+        el.classList.add('active');
+      }
+    });
   }
 
   function populateExperience(experience) {
