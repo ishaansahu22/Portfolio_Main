@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
     }
 
     const repoOwner = "ishaansahu22";
-    const repoName = "portfolio";
+    const repoName = "Portfolio_Main";
     const filePath = "visitors.json";
     const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
 

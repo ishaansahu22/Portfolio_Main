@@ -19,7 +19,7 @@ exports.handler = async (event, context) => {
 
     // 1. Get the current file's SHA (required by GitHub API to update a file)
     const repoOwner = "ishaansahu22";
-    const repoName = "portfolio";
+    const repoName = "Portfolio_Main";
     const filePath = "content.json"; // This depends on how it's deployed. Let's assume it's root for now, or if it's inside portfolio folder in the repo it should be 'portfolio/content.json'.
     // Assuming the netlify site is linked to the portfolio repository and content.json is at the root of the repo.
     // If the repo is a monorepo, the path might be different. Let's assume it's just 'content.json' in the repo root.
