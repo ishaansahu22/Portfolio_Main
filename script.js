@@ -145,9 +145,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Fetch content concurrently with intro
+  const fallbackContent = {
+    identity: { name: "Ishaan Sahu", tagline: "Software Engineer", bio: "Welcome to my portfolio.", roles: ["Developer", "Engineer"], github: "https://github.com/ishaansahu22", linkedin: "https://linkedin.com/in/ishaansahu22" },
+    skills: { "Tech Stack": ["JavaScript", "Python", "HTML", "CSS"] },
+    pinnedProjects: [],
+    hiddenRepos: [],
+    experience: [],
+    siteSettings: { accentPreset: "cyber", footerText: "© 2024 Ishaan Sahu" }
+  };
+  
   const contentPromise = fetch('content.json')
     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-    .catch(e => { console.error('Failed to load content.json', e); return null; });
+    .catch(e => { console.warn('Using fallback content due to fetch failure:', e); return fallbackContent; });
 
   // ---- Run the intro sequence ----
   await sleep(400);
@@ -294,13 +303,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cursorDot = document.querySelector('.cursor-dot');
     const cursorRing = document.querySelector('.cursor-ring');
 
-    if (!window.matchMedia('(pointer: fine)').matches) {
-      if (cursorDot) cursorDot.style.display = 'none';
-      if (cursorRing) cursorRing.style.display = 'none';
-      document.body.style.cursor = 'auto';
-      return;
-    }
+    if (!cursorDot || !cursorRing) return;
 
+    // Track mouse position globally
     document.addEventListener('mousemove', (e) => {
       cursorDot.style.left = e.clientX + 'px';
       cursorDot.style.top = e.clientY + 'px';
