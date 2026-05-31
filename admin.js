@@ -389,14 +389,21 @@ const adminApp = (() => {
       const rowsContainer = document.getElementById('visitor-log-rows');
       rowsContainer.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:2rem; color:var(--text-muted);">Retrieving real-time logs...</td></tr>';
 
+      // Ensure we have the latest password from session
+      const pwd = password || sessionStorage.getItem('adminPassword');
+      if (!pwd) {
+        throw new Error('Not authenticated. Please log out and log back in.');
+      }
+
       const res = await fetch('/api/visitors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password })
+        body: JSON.stringify({ password: pwd })
       });
 
       if (!res.ok) {
-        throw new Error('Unauthorized or failed connection');
+        const errBody = await res.text().catch(() => '');
+        throw new Error(`Server returned ${res.status}: ${errBody}`);
       }
 
       const data = await res.json();
@@ -433,7 +440,7 @@ const adminApp = (() => {
         else if (ua.includes('Edge')) client += ' • Edge';
 
         return `
-          <tr style="border-bottom: 1px solid var(--card-border); hover:background: var(--surface-hover);">
+          <tr style="border-bottom: 1px solid var(--card-border);">
             <td style="padding: 1rem; font-family: monospace; color: var(--accent); font-weight: 500;">${log.ip}</td>
             <td style="padding: 1rem;"><span style="background: rgba(212,168,67,0.1); color: #d4a843; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">${log.page}</span></td>
             <td style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem;">${date}</td>
