@@ -1,30 +1,128 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  // --- Always initialize visual effects & scroll reveal ---
-  initAnimations();
-  initNeuralCanvas();
-  initMatrixRain();
 
-  // Safety net: force-reveal all sections after 3s in case IntersectionObserver doesn't fire
-  setTimeout(() => {
-    document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
-    document.querySelectorAll('.timeline-item').forEach(el => el.classList.add('visible'));
-  }, 3000);
+  // =============================================
+  //  HELPER
+  // =============================================
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  // --- Data Fetching ---
-  let content = {};
-  try {
-    const response = await fetch('content.json');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    content = await response.json();
-    initSite(content);
-  } catch (error) {
-    console.error("Failed to load content.json", error);
-    // Force-reveal all sections immediately on error so static HTML content is visible
-    document.querySelectorAll('.reveal').forEach(el => el.classList.add('active'));
-    document.querySelectorAll('.timeline-item').forEach(el => el.classList.add('visible'));
+  // =============================================
+  //  INTRO ANIMATION — Cybersecurity Boot Sequence
+  // =============================================
+  const introOverlay = document.getElementById('intro-overlay');
+  const binaryCanvas = document.getElementById('binary-rain');
+  const binaryCtx = binaryCanvas.getContext('2d');
+  const terminalBody = document.getElementById('terminal-body');
+
+  // Size canvas
+  binaryCanvas.width = window.innerWidth;
+  binaryCanvas.height = window.innerHeight;
+
+  // Binary rain columns
+  const fontSize = 14;
+  const columns = Math.floor(binaryCanvas.width / fontSize);
+  const drops = [];
+  for (let i = 0; i < columns; i++) {
+    drops[i] = Math.random() * -40;
   }
 
-  // --- Initializers ---
+  function drawBinaryRain() {
+    binaryCtx.fillStyle = 'rgba(5, 5, 8, 0.06)';
+    binaryCtx.fillRect(0, 0, binaryCanvas.width, binaryCanvas.height);
+    binaryCtx.font = fontSize + 'px monospace';
+
+    for (let i = 0; i < drops.length; i++) {
+      const char = Math.random() > 0.5 ? '1' : '0';
+      const rnd = Math.random();
+
+      if (rnd > 0.96) {
+        binaryCtx.fillStyle = '#ffffff';
+      } else if (rnd > 0.65) {
+        binaryCtx.fillStyle = 'rgba(6, 182, 212, 0.85)';
+      } else {
+        binaryCtx.fillStyle = 'rgba(99, 102, 241, 0.45)';
+      }
+
+      binaryCtx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+      if (drops[i] * fontSize > binaryCanvas.height && Math.random() > 0.975) {
+        drops[i] = 0;
+      }
+      drops[i]++;
+    }
+  }
+
+  const rainInterval = setInterval(drawBinaryRain, 35);
+
+  // Terminal typing
+  async function typeLine(text, cls = '') {
+    return new Promise(resolve => {
+      const line = document.createElement('div');
+      line.className = 'terminal-line ' + cls;
+      terminalBody.appendChild(line);
+
+      let i = 0;
+      const interval = setInterval(() => {
+        line.textContent += text.charAt(i);
+        i++;
+        if (i >= text.length) {
+          clearInterval(interval);
+          setTimeout(resolve, 80);
+        }
+      }, 22);
+    });
+  }
+
+  // Fetch content data concurrently while intro plays
+  const contentPromise = fetch('content.json')
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .catch(e => { console.error('Failed to load content.json', e); return null; });
+
+  // ---- Run the intro sequence ----
+  await sleep(400);
+  await typeLine('> INITIALIZING SYSTEM...', 'cyan');
+  await sleep(250);
+  await typeLine('> SCANNING PORTS 1-65535... [OK]', 'green');
+  await sleep(180);
+  await typeLine('> LOADING KERNEL MODULES... [OK]', 'green');
+  await sleep(300);
+  await typeLine('> ESTABLISHING ENCRYPTED TUNNEL...', 'cyan');
+  await sleep(450);
+  await typeLine('> DECRYPTING PORTFOLIO DATA...', 'cyan');
+  await sleep(350);
+  await typeLine('> FIREWALL BYPASSED... [OK]', 'green');
+  await sleep(200);
+  await typeLine('> IDENTITY VERIFIED ✓', 'green');
+  await sleep(350);
+  await typeLine('', 'dim');
+  await typeLine('█  ACCESS GRANTED  █', 'success glitch');
+  await sleep(1100);
+
+  // Fade out intro
+  clearInterval(rainInterval);
+  introOverlay.classList.add('fade-out');
+  await sleep(900);
+  introOverlay.remove();
+
+  // =============================================
+  //  INITIALIZE SITE
+  // =============================================
+  const contentData = await contentPromise;
+  if (contentData) {
+    initSite(contentData);
+  }
+
+  initCustomCursor();
+  initMobileNav();
+  initNeuralCanvas();
+  initProjectTilt();
+  initPageNavigation();
+
+  // Show the starting page
+  showPage(window.location.hash || '#hero');
+
+  // =============================================
+  //  SITE POPULATION
+  // =============================================
   function initSite(data) {
     applyTheme(data.siteSettings);
     populateHero(data.identity);
@@ -33,20 +131,117 @@ document.addEventListener('DOMContentLoaded', async () => {
     populateProjects(data.pinnedProjects, data.hiddenRepos, data.identity.github);
     populateExperience(data.experience);
     populateContactAndFooter(data.identity, data.siteSettings);
-    
     initTypewriter(data.identity.roles);
+  }
 
-    // Re-observe any dynamically injected .reveal elements
-    document.querySelectorAll('.reveal, .timeline-item, .about-grid').forEach(el => {
-      if (window._portfolioObserver) window._portfolioObserver.observe(el);
+  // =============================================
+  //  PAGE NAVIGATION SYSTEM
+  // =============================================
+  function initPageNavigation() {
+    // Nav link clicks
+    document.querySelectorAll('.nav-links a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        showPage(link.getAttribute('href'));
+        document.querySelector('.nav-links').classList.remove('active');
+      });
+    });
+
+    // Logo → Home
+    document.querySelector('.logo').addEventListener('click', (e) => {
+      e.preventDefault();
+      showPage('#hero');
+    });
+
+    // Hero CTA buttons
+    document.querySelectorAll('.hero-ctas a').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        showPage(btn.getAttribute('href'));
+      });
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', () => {
+      showPage(window.location.hash || '#hero');
     });
   }
 
-  // --- Custom Cursor ---
-  const cursorDot = document.querySelector('.cursor-dot');
-  const cursorRing = document.querySelector('.cursor-ring');
-  
-  if (window.matchMedia("(pointer: fine)").matches) {
+  function showPage(hash) {
+    // Hide all page sections
+    document.querySelectorAll('.page-section').forEach(s => {
+      s.classList.remove('page-active');
+    });
+
+    // Show the target section
+    const target = document.querySelector(hash);
+    if (target) {
+      target.classList.add('page-active');
+
+      // Trigger reveal animations (staggered, first-time only)
+      const reveals = target.querySelectorAll('.reveal:not(.active)');
+      reveals.forEach((el, i) => {
+        setTimeout(() => el.classList.add('active'), i * 120);
+      });
+
+      // Experience timeline cascade
+      if (hash === '#experience') {
+        const items = target.querySelectorAll('.timeline-item:not(.visible)');
+        items.forEach((item, i) => {
+          setTimeout(() => {
+            item.classList.add('visible');
+            updateTimelineFill();
+          }, i * 220);
+        });
+      }
+
+      // About stats counter
+      if (hash === '#about') {
+        triggerStats();
+      }
+    }
+
+    // Update nav active state
+    document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+    const activeLink = document.querySelector(`.nav-links a[href="${hash}"]`);
+    if (activeLink) activeLink.classList.add('active');
+
+    // Scroll to top and update URL
+    window.scrollTo(0, 0);
+    if (window.location.hash !== hash) {
+      history.pushState(null, '', hash);
+    }
+  }
+
+  function triggerStats() {
+    document.querySelectorAll('.stat-number').forEach(stat => {
+      if (!stat.dataset.counted) {
+        stat.dataset.counted = 'true';
+        const target = +stat.dataset.target;
+        let count = 0;
+        const int = setInterval(() => {
+          count++;
+          stat.textContent = count;
+          if (count >= target) clearInterval(int);
+        }, 200);
+      }
+    });
+  }
+
+  // =============================================
+  //  CUSTOM CURSOR
+  // =============================================
+  function initCustomCursor() {
+    const cursorDot = document.querySelector('.cursor-dot');
+    const cursorRing = document.querySelector('.cursor-ring');
+
+    if (!window.matchMedia('(pointer: fine)').matches) {
+      if (cursorDot) cursorDot.style.display = 'none';
+      if (cursorRing) cursorRing.style.display = 'none';
+      document.body.style.cursor = 'auto';
+      return;
+    }
+
     document.addEventListener('mousemove', (e) => {
       cursorDot.style.left = e.clientX + 'px';
       cursorDot.style.top = e.clientY + 'px';
@@ -54,33 +249,34 @@ document.addEventListener('DOMContentLoaded', async () => {
       cursorRing.style.top = e.clientY + 'px';
     });
 
-    const addHoverClass = () => document.body.classList.add('hovering');
-    const removeHoverClass = () => document.body.classList.remove('hovering');
+    function addHover() { document.body.classList.add('hovering'); }
+    function removeHover() { document.body.classList.remove('hovering'); }
 
-    document.querySelectorAll('a, button, input, textarea, .skill-chip, .project-card, .small-card').forEach(el => {
-      el.addEventListener('mouseenter', addHoverClass);
-      el.addEventListener('mouseleave', removeHoverClass);
+    function attachHoverListeners() {
+      document.querySelectorAll('a, button, input, textarea, .skill-chip, .project-card, .small-card').forEach(el => {
+        el.removeEventListener('mouseenter', addHover);
+        el.removeEventListener('mouseleave', removeHover);
+        el.addEventListener('mouseenter', addHover);
+        el.addEventListener('mouseleave', removeHover);
+      });
+    }
+    attachHoverListeners();
+    // Re-attach after dynamic content loads
+    setTimeout(attachHoverListeners, 4000);
+  }
+
+  // =============================================
+  //  MOBILE NAV
+  // =============================================
+  function initMobileNav() {
+    document.getElementById('hamburger').addEventListener('click', () => {
+      document.querySelector('.nav-links').classList.toggle('active');
     });
   }
 
-  // --- Mobile Nav ---
-  const hamburger = document.getElementById('hamburger');
-  const navLinks = document.querySelector('.nav-links');
-  hamburger.addEventListener('click', () => {
-    navLinks.classList.toggle('active');
-  });
-
-  // --- Navbar Scroll Effect ---
-  window.addEventListener('scroll', () => {
-    const nav = document.getElementById('navbar');
-    if (window.scrollY > 50) {
-      nav.classList.add('scrolled');
-    } else {
-      nav.classList.remove('scrolled');
-    }
-  });
-
-  // --- Population Functions ---
+  // =============================================
+  //  POPULATION FUNCTIONS
+  // =============================================
   function applyTheme(settings) {
     if (settings && settings.accentPreset) {
       document.body.className = `theme-${settings.accentPreset}`;
@@ -96,18 +292,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       statusEl.style.display = 'none';
     }
     document.getElementById('hero-subtext').textContent = identity.tagline;
-    
-    // Socials
-    const socialRow = document.getElementById('hero-socials');
-    socialRow.innerHTML = getSocialHTML(identity);
+    document.getElementById('hero-socials').innerHTML = getSocialHTML(identity);
   }
 
   function getSocialHTML(identity) {
     let html = '';
-    if(identity.github) html += `<a href="${identity.github}" target="_blank" class="social-icon" title="GitHub">GH</a>`;
-    if(identity.linkedin) html += `<a href="${identity.linkedin}" target="_blank" class="social-icon" title="LinkedIn">IN</a>`;
-    if(identity.leetcode) html += `<a href="${identity.leetcode}" target="_blank" class="social-icon" title="LeetCode">LC</a>`;
-    if(identity.email) html += `<a href="mailto:${identity.email}" class="social-icon" title="Email">@</a>`;
+    if (identity.github) html += `<a href="${identity.github}" target="_blank" class="social-icon" title="GitHub">GH</a>`;
+    if (identity.linkedin) html += `<a href="${identity.linkedin}" target="_blank" class="social-icon" title="LinkedIn">IN</a>`;
+    if (identity.leetcode) html += `<a href="${identity.leetcode}" target="_blank" class="social-icon" title="LeetCode">LC</a>`;
+    if (identity.email) html += `<a href="mailto:${identity.email}" class="social-icon" title="Email">@</a>`;
     return html;
   }
 
@@ -129,16 +322,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function populateProjects(pinned, hidden, githubUrl) {
-    // Pinned
     const featuredContainer = document.getElementById('featured-projects');
     featuredContainer.innerHTML = '';
     const sortedPinned = [...pinned].sort((a, b) => a.rank - b.rank);
-    
+
     sortedPinned.forEach(p => {
       const highlightsHtml = p.highlights.map(h => `<li>${h}</li>`).join('');
-      // We don't have the language or real github link without fetching it, so we'll mock or leave blank, 
-      // but to be "production-grade" we should fetch the repo details if possible.
-      // We will do a combined fetch.
       const html = `
         <div class="project-card reveal" data-repo="${p.repo}">
           <div class="card-glow"></div>
@@ -155,23 +344,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       featuredContainer.insertAdjacentHTML('beforeend', html);
     });
 
-    // Fetch All from GitHub
+    // Fetch all repos from GitHub
     const allContainer = document.getElementById('all-projects');
     try {
       const res = await fetch('https://api.github.com/users/ishaansahu22/repos?sort=updated&per_page=20');
-      if(res.ok) {
+      if (res.ok) {
         const repos = await res.json();
         const pinnedRepos = pinned.map(p => p.repo);
-        
+
         repos.forEach(repo => {
-          // Update pinned language if found
-          if(pinnedRepos.includes(repo.name)) {
+          if (pinnedRepos.includes(repo.name)) {
             const el = document.getElementById(`lang-${repo.name}`);
-            if(el) el.textContent = repo.language || 'Code';
-            return; // Skip adding to all projects
+            if (el) el.textContent = repo.language || 'Code';
+            return;
           }
-          if(hidden.includes(repo.name)) return;
-          
+          if (hidden.includes(repo.name)) return;
+
           const html = `
             <a href="${repo.html_url}" target="_blank" class="small-card">
               <div class="small-card-title">
@@ -188,25 +376,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           allContainer.insertAdjacentHTML('beforeend', html);
         });
       }
-    } catch(e) {
-      console.log("Error fetching GH repos", e);
+    } catch (e) {
+      console.log('Error fetching GH repos', e);
     }
-
-    // Observe any dynamically-added .reveal elements (featured project cards)
-    featuredContainer.querySelectorAll('.reveal').forEach(el => {
-      if (window._portfolioObserver) {
-        window._portfolioObserver.observe(el);
-      } else {
-        el.classList.add('active');
-      }
-    });
   }
 
   function populateExperience(experience) {
     const container = document.getElementById('timeline-container');
-    // keep timeline line, remove existing nodes
     container.innerHTML = '<div class="timeline-line"><div class="timeline-line-fill" id="timeline-fill"></div></div>';
-    
+
     experience.forEach(exp => {
       const bullets = exp.bullets.map(b => `<li>${b}</li>`).join('');
       const html = `
@@ -228,7 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function populateContactAndFooter(identity, settings) {
-    if(identity.email) {
+    if (identity.email) {
       document.getElementById('contact-email').textContent = identity.email;
       document.getElementById('contact-email').href = `mailto:${identity.email}`;
     }
@@ -237,17 +415,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('footer-socials-row').innerHTML = getSocialHTML(identity);
   }
 
-  // --- Animations & Effects ---
+  // =============================================
+  //  TYPEWRITER
+  // =============================================
   function initTypewriter(roles) {
     const el = document.getElementById('typewriter');
-    if(!roles || roles.length === 0) return;
+    if (!roles || roles.length === 0) return;
     let roleIndex = 0;
     let charIndex = 0;
     let isDeleting = false;
 
     function type() {
       const currentRole = roles[roleIndex];
-      
       if (isDeleting) {
         el.textContent = currentRole.substring(0, charIndex - 1);
         charIndex--;
@@ -272,45 +451,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     type();
   }
 
-  function initAnimations() {
-    // Scroll Reveal
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if(entry.isIntersecting) {
-          entry.target.classList.add('active');
-          
-          // Trigger timeline item visible
-          if(entry.target.classList.contains('timeline-item')) {
-            entry.target.classList.add('visible');
-            updateTimelineFill();
-          }
+  // =============================================
+  //  EFFECTS
+  // =============================================
+  function updateTimelineFill() {
+    const container = document.getElementById('timeline-container');
+    const fill = document.getElementById('timeline-fill');
+    if (!container || !fill) return;
+    const items = container.querySelectorAll('.timeline-item.visible');
+    if (items.length > 0) {
+      const lastItem = items[items.length - 1];
+      const node = lastItem.querySelector('.timeline-node');
+      if (node) {
+        fill.style.height = (node.offsetTop + 10) + 'px';
+      }
+    }
+  }
 
-          // Trigger stats
-          if(entry.target.classList.contains('about-grid')) {
-            const stats = document.querySelectorAll('.stat-number');
-            stats.forEach(stat => {
-              if(!stat.dataset.counted) {
-                stat.dataset.counted = true;
-                const target = +stat.dataset.target;
-                let count = 0;
-                const int = setInterval(() => {
-                  count++;
-                  stat.textContent = count;
-                  if(count >= target) clearInterval(int);
-                }, 200);
-              }
-            });
-          }
-        }
-      });
-    }, { threshold: 0.1 });
-
-    // Store observer globally so dynamically-added elements can be observed later
-    window._portfolioObserver = observer;
-
-    document.querySelectorAll('.reveal, .timeline-item, .about-grid').forEach(el => observer.observe(el));
-
-    // Tilt Effect
+  function initProjectTilt() {
     document.addEventListener('mousemove', (e) => {
       document.querySelectorAll('.project-card').forEach(card => {
         const rect = card.getBoundingClientRect();
@@ -318,8 +476,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const y = e.clientY - rect.top;
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        
-        if (e.clientX > rect.left && e.clientX < rect.right && e.clientY > rect.top && e.clientY < rect.bottom) {
+
+        if (e.clientX > rect.left && e.clientX < rect.right &&
+            e.clientY > rect.top && e.clientY < rect.bottom) {
           const rotateX = ((y - centerY) / centerY) * -5;
           const rotateY = ((x - centerX) / centerX) * 5;
           card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
@@ -330,33 +489,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  function updateTimelineFill() {
-    const container = document.getElementById('timeline-container');
-    const fill = document.getElementById('timeline-fill');
-    if(!container || !fill) return;
-    const items = container.querySelectorAll('.timeline-item.visible');
-    if(items.length > 0) {
-      const lastItem = items[items.length - 1];
-      const node = lastItem.querySelector('.timeline-node');
-      if(node) {
-        fill.style.height = (node.offsetTop + 10) + 'px';
-      }
-    }
-  }
-
-  // --- Neural Canvas ---
+  // =============================================
+  //  NEURAL CANVAS (Hero background)
+  // =============================================
   function initNeuralCanvas() {
     const canvas = document.getElementById('neural-canvas');
-    if(!canvas) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     let nodes = [];
     const numNodes = window.innerWidth > 768 ? 60 : 30;
-    
-    for(let i=0; i<numNodes; i++) {
+
+    for (let i = 0; i < numNodes; i++) {
       nodes.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
@@ -377,28 +524,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     canvas.addEventListener('mouseleave', () => { mouseX = -1000; mouseY = -1000; });
 
     function draw() {
-      if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       const themeColor = getComputedStyle(document.body).getPropertyValue('--accent-primary').trim();
-      
-      for(let i=0; i<nodes.length; i++) {
+
+      for (let i = 0; i < nodes.length; i++) {
         let node = nodes[i];
-        
-        // Repel
+
+        // Mouse repulsion
         let dxMouse = mouseX - node.x;
         let dyMouse = mouseY - node.y;
-        let distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
-        if(distMouse < 150) {
+        let distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
+        if (distMouse < 150) {
           node.x -= dxMouse * 0.02;
           node.y -= dyMouse * 0.02;
         }
 
         node.x += node.vx;
         node.y += node.vy;
-        
-        if(node.x < 0 || node.x > canvas.width) node.vx *= -1;
-        if(node.y < 0 || node.y > canvas.height) node.vy *= -1;
+
+        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
 
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
@@ -406,18 +553,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         ctx.globalAlpha = 0.3;
         ctx.fill();
 
-        for(let j=i+1; j<nodes.length; j++) {
+        // Connection lines
+        for (let j = i + 1; j < nodes.length; j++) {
           let node2 = nodes[j];
           let dx = node.x - node2.x;
           let dy = node.y - node2.y;
-          let dist = Math.sqrt(dx*dx + dy*dy);
-          
-          if(dist < 150) {
+          let dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 150) {
             ctx.beginPath();
             ctx.moveTo(node.x, node.y);
             ctx.lineTo(node2.x, node2.y);
             ctx.strokeStyle = themeColor;
-            ctx.globalAlpha = 0.15 * (1 - dist/150);
+            ctx.globalAlpha = 0.15 * (1 - dist / 150);
             ctx.stroke();
           }
         }
@@ -433,19 +581,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // --- Matrix Rain ---
-  function initMatrixRain() {
-    const container = document.getElementById('matrix-rain');
-    if(!container) return;
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$+-*/=%\"'#&_(),.;:?!\\|{}<>[]^~";
-    
-    setInterval(() => {
-      if(window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-      let text = '';
-      for(let i=0; i<30; i++) {
-        text += chars.charAt(Math.floor(Math.random() * chars.length)) + '<br>';
-      }
-      container.innerHTML = text;
-    }, 100);
-  }
 });

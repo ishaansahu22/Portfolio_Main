@@ -4,19 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ishaan Sahu | Portfolio</title>
+  <meta name="description" content="Portfolio of Ishaan Sahu — Software Engineer, ML Engineer, Full-Stack Developer.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <noscript>
     <style>
+      .intro-overlay { display: none !important; }
       .reveal { opacity: 1 !important; transform: none !important; }
       .timeline-item { opacity: 1 !important; transform: none !important; }
+      .page-section { display: block !important; }
+      #hero { display: flex !important; }
       body { cursor: auto; }
     </style>
   </noscript>
 </head>
 <body>
+
+  <!-- ============ INTRO OVERLAY ============ -->
+  <div id="intro-overlay" class="intro-overlay">
+    <canvas id="binary-rain"></canvas>
+    <div class="scanline"></div>
+    <div class="intro-content">
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <span class="terminal-dot red"></span>
+          <span class="terminal-dot yellow"></span>
+          <span class="terminal-dot green"></span>
+          <span class="terminal-title">ishaan@portfolio:~$</span>
+        </div>
+        <div class="terminal-body" id="terminal-body"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Custom Cursor -->
   <div class="cursor-dot"></div>
   <div class="cursor-ring"></div>
@@ -29,7 +51,7 @@
         <span></span><span></span><span></span>
       </div>
       <ul class="nav-links">
-        <li><a href="#hero">Home</a></li>
+        <li><a href="#hero" class="active">Home</a></li>
         <li><a href="#about">About</a></li>
         <li><a href="#skills">Skills</a></li>
         <li><a href="#projects">Projects</a></li>
@@ -40,7 +62,7 @@
   </nav>
 
   <!-- Hero Section -->
-  <section id="hero" class="hero">
+  <section id="hero" class="hero page-section">
     <div class="hero-bg">
       <div class="gradient-mesh"></div>
       <canvas id="neural-canvas"></canvas>
@@ -66,7 +88,7 @@
   </section>
 
   <!-- About Section -->
-  <section id="about" class="about">
+  <section id="about" class="about page-section">
     <!-- SVG Decorations -->
     <svg class="circuit-deco top-left" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <path d="M10,10 L40,10 L50,20 L90,20 M10,30 L30,30 L40,40 L90,40" stroke="var(--accent-primary)" fill="none" stroke-width="1"/>
@@ -96,9 +118,9 @@
   </section>
 
   <!-- Skills Section -->
-  <section id="skills" class="skills">
+  <section id="skills" class="skills page-section">
     <div class="container reveal">
-      <h2 class="section-title">Skills & Arsenal</h2>
+      <h2 class="section-title">Skills &amp; Arsenal</h2>
       <div id="skills-container" class="skills-grid">
         <!-- Injected via JS -->
       </div>
@@ -106,7 +128,7 @@
   </section>
 
   <!-- Projects Section -->
-  <section id="projects" class="projects">
+  <section id="projects" class="projects page-section">
     <div class="projects-bg">
       <div class="data-stream"></div>
     </div>
@@ -124,10 +146,10 @@
   </section>
 
   <!-- Experience Section -->
-  <section id="experience" class="experience">
+  <section id="experience" class="experience page-section">
     <div class="matrix-rain" id="matrix-rain"></div>
     <div class="container reveal">
-      <h2 class="section-title">Experience & Journey</h2>
+      <h2 class="section-title">Experience &amp; Journey</h2>
       <div class="timeline" id="timeline-container">
         <div class="timeline-line"></div>
         <!-- Injected via JS -->
@@ -136,7 +158,7 @@
   </section>
 
   <!-- Contact Section -->
-  <section id="contact" class="contact">
+  <section id="contact" class="contact page-section">
     <div class="container reveal">
       <h2 class="section-title center">Let's Build Something Incredible.</h2>
       <p class="contact-subtext center">Open to opportunities and collaborations in AI, Web Development, and Cybersecurity.</p>
