@@ -1,0 +1,75 @@
+{
+  "identity": {
+    "name": "Ishaan Sahu",
+    "tagline": "Bridging Technical Depth with Business Value.",
+    "roles": ["Software Engineer", "ML Engineer", "Full-Stack Developer", "CS Student @ SRM IST"],
+    "bio": "B.Tech CSE student at SRM IST Chennai (Expected May 2027). Strong foundation in software development, cloud, and AI. Driven by building systems that deliver real business value. Beyond code — solution design, team leadership, client engagement, and cybersecurity research.",
+    "status": { "active": true, "label": "Open to Opportunities" },
+    "photo": "",
+    "email": "ishaansahu22@gmail.com",
+    "linkedin": "https://linkedin.com/in/sahuishaan22",
+    "github": "https://github.com/ishaansahu22",
+    "leetcode": "https://leetcode.com/u/ishaansahu22"
+  },
+  "pinnedProjects": [
+    {
+      "repo": "eventra-project",
+      "rank": 1,
+      "overrideDescription": "Next.js vendor management platform for the events and wedding industry. Custom search engine, multi-step checkout, secure auth, dark-mode UI deployed on Vercel.",
+      "highlights": ["Custom search engine", "Secure auth with Formik + Yup", "Deployed on Vercel"]
+    },
+    {
+      "repo": "HEALTH_DIGITAL_TWIN",
+      "rank": 2,
+      "overrideDescription": "Real-time patient biometrics mapped to predictive simulation models to assist medical professionals with outcome forecasting.",
+      "highlights": ["Real-time biometric mapping", "Predictive simulation", "API integrations"]
+    },
+    {
+      "repo": "riskbound-ai",
+      "rank": 3,
+      "overrideDescription": "Conformal Prediction framework using MAPIE for calibrated ML inference on patient vitals with real-time Streamlit dashboard.",
+      "highlights": ["Uncertainty quantification", "XGBoost + MAPIE", "Interactive Altair visualizations"]
+    }
+  ],
+  "hiddenRepos": [],
+  "skills": {
+    "Languages & Core": ["C++", "Python", "JavaScript", "TypeScript", "SQL"],
+    "Frameworks & Web": ["Next.js", "React.js", "Flask", "Tailwind CSS", "REST APIs", "HTML5/CSS3"],
+    "ML & Data": ["Scikit-learn", "TensorFlow", "Pandas", "NumPy", "XGBoost", "MAPIE", "Streamlit"],
+    "Tools & Infra": ["Git", "Vercel", "Netlify", "Formik", "Yup", "Joblib"]
+  },
+  "experience": [
+    {
+      "role": "Front-end Development Intern",
+      "company": "TechieHelp",
+      "period": "Sep 2025 – Oct 2025",
+      "type": "Remote",
+      "bullets": ["Built Eventra on Next.js with custom search engine and vendor detail pages", "Implemented secure auth and multi-step checkout with Formik + Yup", "Delivered fully responsive dark-mode UI deployed to Vercel"]
+    },
+    {
+      "role": "Sales & Marketing Intern",
+      "company": "Adval Studios",
+      "period": "Nov 2024 – Jan 2025",
+      "type": "Hybrid",
+      "bullets": ["Lead generation, client engagement, and campaign execution", "Worked cross-functionally to optimize outreach and value delivery"]
+    },
+    {
+      "role": "Discipline Committee Member",
+      "company": "SRM IST",
+      "period": "Aug 2023 – Present",
+      "type": "On-site",
+      "bullets": ["Assisted in tech fest and official events ensuring smooth operations"]
+    },
+    {
+      "role": "AV / Media Design",
+      "company": "Krishna Public School",
+      "period": "2016 – 2023",
+      "type": "On-site",
+      "bullets": ["Managed audio-visual experiences for large-scale school events"]
+    }
+  ],
+  "siteSettings": {
+    "accentPreset": "indigo",
+    "footerText": "© 2025 Ishaan Sahu. Designed & built by Ishaan Sahu."
+  }
+}

@@ -1,0 +1,13 @@
+[build]
+  functions = "netlify/functions"
+  publish = "." # Serves index.html from root of this repo mapping (which will be inside portfolio folder when deployed)
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin.html"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200

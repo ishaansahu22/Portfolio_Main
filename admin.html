@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Area</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f0f0f;
+      --surface: #161616;
+      --surface-hover: #1c1c1c;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-danger: #e11d48;
+      --card-border: rgba(255, 255, 255, 0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+    
+    /* Login Screen */
+    #login-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: var(--surface); padding: 3rem; border-radius: 12px; border: 1px solid var(--card-border); text-align: center; width: 100%; max-width: 400px; }
+    .login-box h2 { margin-bottom: 2rem; color: var(--text-main); }
+    .login-box input { width: 100%; padding: 1rem; background: var(--bg-dark); border: 1px solid var(--card-border); border-radius: 6px; color: white; margin-bottom: 1rem; text-align: center; font-size: 1.2rem; }
+    .login-box input:focus { outline: none; border-color: var(--accent); }
+    .btn { background: var(--accent); color: white; border: none; padding: 1rem 2rem; border-radius: 6px; cursor: pointer; font-weight: 600; width: 100%; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.9; }
+    .btn-danger { background: var(--accent-danger); }
+    .btn-outline { background: transparent; border: 1px solid var(--card-border); }
+    
+    /* Dashboard Layout */
+    #dashboard { display: none; width: 100%; height: 100%; }
+    .sidebar { width: 250px; background: var(--surface); border-right: 1px solid var(--card-border); padding: 2rem 0; display: flex; flex-direction: column; }
+    .sidebar h2 { padding: 0 2rem; margin-bottom: 2rem; font-size: 1.2rem; color: var(--accent); }
+    .nav-btn { background: transparent; border: none; color: var(--text-muted); text-align: left; padding: 1rem 2rem; cursor: pointer; transition: 0.2s; font-size: 1rem; width: 100%; }
+    .nav-btn:hover, .nav-btn.active { background: var(--surface-hover); color: var(--text-main); border-right: 3px solid var(--accent); }
+    .logout-btn { margin-top: auto; color: var(--accent-danger); }
+    
+    .main-content { flex: 1; padding: 3rem; overflow-y: auto; }
+    .section-view { display: none; max-width: 800px; }
+    .section-view.active { display: block; }
+    .section-view h1 { margin-bottom: 2rem; }
+    
+    /* Forms */
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.75rem; background: var(--surface); border: 1px solid var(--card-border); border-radius: 6px; color: white; font-family: inherit; }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
+    .flex-row { display: flex; gap: 1rem; align-items: center; }
+    .chip { display: inline-flex; align-items: center; background: var(--surface-hover); padding: 0.25rem 0.75rem; border-radius: 16px; margin: 0.25rem; font-size: 0.9rem; border: 1px solid var(--card-border); }
+    .chip button { background: none; border: none; color: var(--accent-danger); margin-left: 0.5rem; cursor: pointer; }
+    
+    .card-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .edit-card { background: var(--surface); border: 1px solid var(--card-border); padding: 1.5rem; border-radius: 8px; position: relative; }
+    .edit-card .delete-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: var(--accent-danger); cursor: pointer; }
+
+    /* Repo Checklist */
+    .repo-item { display: flex; align-items: center; padding: 1rem; background: var(--surface); border: 1px solid var(--card-border); border-radius: 6px; margin-bottom: 0.5rem; cursor: grab; }
+    .repo-item:active { cursor: grabbing; }
+    .repo-item.pinned { border-color: var(--accent); }
+    .repo-item input[type="checkbox"] { margin-right: 1rem; transform: scale(1.2); }
+    .repo-rank { margin-left: auto; background: var(--accent); color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+    .repo-expand { padding: 1rem; background: var(--bg-dark); border: 1px solid var(--card-border); border-top: none; border-radius: 0 0 6px 6px; margin-top: -0.5rem; margin-bottom: 1rem; display: none; }
+    .repo-item.pinned + .repo-expand { display: block; }
+    
+    /* Toast */
+    #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 2rem; border-radius: 6px; color: white; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 2000; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    .toast-success { background: var(--accent); }
+    .toast-error { background: var(--accent-danger); }
+  </style>
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="login-screen">
+    <div class="login-box">
+      <h2>Restricted Area</h2>
+      <form id="login-form">
+        <input type="password" id="admin-password" placeholder="Passphrase" required autofocus>
+        <button type="submit" class="btn" id="login-btn">Authenticate</button>
+      </form>
+      <div id="login-error" style="color: var(--accent-danger); margin-top: 1rem; display: none;">Invalid password</div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard">
+    <div class="sidebar">
+      <h2>Control Panel</h2>
+      <button class="nav-btn active" data-target="sec-identity">Identity</button>
+      <button class="nav-btn" data-target="sec-featured">Featured Projects</button>
+      <button class="nav-btn" data-target="sec-hidden">Hidden Repos</button>
+      <button class="nav-btn" data-target="sec-skills">Skills</button>
+      <button class="nav-btn" data-target="sec-experience">Experience</button>
+      <button class="nav-btn" data-target="sec-settings">Site Settings</button>
+      <button class="nav-btn logout-btn" id="logout-btn">Log Out</button>
+    </div>
+    
+    <div class="main-content">
+      
+      <!-- Identity Section -->
+      <div id="sec-identity" class="section-view active">
+        <h1>Identity</h1>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="id-name">
+        </div>
+        <div class="form-group">
+          <label>Tagline</label>
+          <input type="text" id="id-tagline">
+        </div>
+        <div class="form-group">
+          <label>Bio</label>
+          <textarea id="id-bio" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Roles (Typewriter)</label>
+          <div id="roles-container" style="margin-bottom: 0.5rem;"></div>
+          <div class="flex-row">
+            <input type="text" id="new-role" placeholder="Add a role...">
+            <button class="btn btn-outline" style="width: auto;" onclick="adminApp.addRole()">Add</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status Badge</label>
+          <div class="flex-row">
+            <input type="checkbox" id="id-status-active" style="width:auto;"> Active
+            <input type="text" id="id-status-label" placeholder="Label text (e.g. Open to Opportunities)">
+          </div>
+        </div>
+        <h3>Social Links</h3>
+        <div class="form-group"><label>Email</label><input type="text" id="id-email"></div>
+        <div class="form-group"><label>LinkedIn</label><input type="text" id="id-linkedin"></div>
+        <div class="form-group"><label>GitHub</label><input type="text" id="id-github"></div>
+        <div class="form-group"><label>LeetCode</label><input type="text" id="id-leetcode"></div>
+        
+        <button class="btn save-btn" data-section="identity">Save Changes</button>
+      </div>
+
+      <!-- Featured Projects Section -->
+      <div id="sec-featured" class="section-view">
+        <h1>Featured Projects</h1>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Select up to 3 projects. Drag to reorder.</p>
+        <div id="featured-list" class="card-list">
+          <!-- Populated by JS -->
+        </div>
+        <button class="btn save-btn" data-section="featured">Save Changes</button>
+      </div>
+
+      <!-- Hidden Repos Section -->
+      <div id="sec-hidden" class="section-view">
+        <h1>Hidden Repos</h1>
+        <p style="color: var(--text-muted); margin-bottom: 1rem;">Select repositories to hide from the "All Projects" grid.</p>
+        <div id="hidden-list" class="card-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+          <!-- Populated by JS -->
+        </div>
+        <button class="btn save-btn" data-section="hidden">Save Changes</button>
+      </div>
+
+      <!-- Skills Section -->
+      <div id="sec-skills" class="section-view">
+        <h1>Skills</h1>
+        <div id="skills-editor">
+          <!-- Populated by JS -->
+        </div>
+        <button class="btn btn-outline" style="margin-bottom: 2rem;" onclick="adminApp.addSkillCategory()">+ Add Category</button><br>
+        <button class="btn save-btn" data-section="skills">Save Changes</button>
+      </div>
+
+      <!-- Experience Section -->
+      <div id="sec-experience" class="section-view">
+        <h1>Experience</h1>
+        <div id="experience-list" class="card-list">
+          <!-- Populated by JS -->
+        </div>
+        <button class="btn btn-outline" style="margin-bottom: 2rem;" onclick="adminApp.addExperience()">+ Add Entry</button><br>
+        <button class="btn save-btn" data-section="experience">Save Changes</button>
+      </div>
+
+      <!-- Site Settings Section -->
+      <div id="sec-settings" class="section-view">
+        <h1>Site Settings</h1>
+        <div class="form-group">
+          <label>Accent Color Preset</label>
+          <select id="set-accent">
+            <option value="indigo">Indigo</option>
+            <option value="emerald">Emerald</option>
+            <option value="amber">Amber</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Footer Text</label>
+          <input type="text" id="set-footer">
+        </div>
+        <button class="btn save-btn" data-section="settings">Save Changes</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
