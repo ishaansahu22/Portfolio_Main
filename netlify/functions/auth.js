@@ -1,8 +1,18 @@
 // netlify/functions/auth.js
 
 exports.handler = async (event, context) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   try {
@@ -10,26 +20,31 @@ exports.handler = async (event, context) => {
 
     if (!process.env.ADMIN_PASSWORD) {
       console.error("ADMIN_PASSWORD environment variable is not set.");
-      return { statusCode: 500, body: JSON.stringify({ error: "Server configuration error" }) };
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: "Server configuration error: ADMIN_PASSWORD not set. Please add it in Netlify Environment Variables." })
+      };
     }
 
     if (password === process.env.ADMIN_PASSWORD) {
-      // Create a simple token for session validation
-      // In a real app, this would be a JWT or secure session ID
       const token = Buffer.from(`${password}:${Date.now()}`).toString('base64');
       return {
         statusCode: 200,
+        headers,
         body: JSON.stringify({ token, success: true }),
       };
     } else {
       return {
         statusCode: 401,
+        headers,
         body: JSON.stringify({ error: "Invalid password" }),
       };
     }
   } catch (err) {
     return {
       statusCode: 400,
+      headers,
       body: JSON.stringify({ error: "Invalid request payload" }),
     };
   }

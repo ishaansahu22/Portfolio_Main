@@ -67,6 +67,28 @@
     .repo-expand { padding: 1rem; background: var(--bg-dark); border: 1px solid var(--card-border); border-top: none; border-radius: 0 0 6px 6px; margin-top: -0.5rem; margin-bottom: 1rem; display: none; }
     .repo-item.pinned + .repo-expand { display: block; }
     
+    /* Resume Upload */
+    .resume-upload-area {
+      border: 2px dashed var(--card-border);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      transition: border-color 0.3s, background 0.3s;
+      cursor: pointer;
+      margin-bottom: 1.5rem;
+    }
+    .resume-upload-area:hover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.05);
+    }
+    .resume-upload-area.dragover {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+    .resume-upload-area p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.9rem; }
+    .resume-current { background: var(--surface); padding: 1rem 1.5rem; border-radius: 6px; border: 1px solid var(--card-border); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .resume-current a { color: var(--accent); text-decoration: underline; }
+
     /* Toast */
     #toast { position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 2rem; border-radius: 6px; color: white; transform: translateY(100px); opacity: 0; transition: all 0.3s; z-index: 2000; }
     #toast.show { transform: translateY(0); opacity: 1; }
@@ -84,7 +106,7 @@
         <input type="password" id="admin-password" placeholder="Passphrase" required autofocus>
         <button type="submit" class="btn" id="login-btn">Authenticate</button>
       </form>
-      <div id="login-error" style="color: var(--accent-danger); margin-top: 1rem; display: none;">Invalid password</div>
+      <div id="login-error" style="color: var(--accent-danger); margin-top: 1rem; display: none;"></div>
     </div>
   </div>
 
@@ -97,6 +119,7 @@
       <button class="nav-btn" data-target="sec-hidden">Hidden Repos</button>
       <button class="nav-btn" data-target="sec-skills">Skills</button>
       <button class="nav-btn" data-target="sec-experience">Experience</button>
+      <button class="nav-btn" data-target="sec-resume">Resume</button>
       <button class="nav-btn" data-target="sec-settings">Site Settings</button>
       <button class="nav-btn" data-target="sec-visitors" id="nav-btn-visitors">Visitors Log</button>
       <button class="nav-btn logout-btn" id="logout-btn">Log Out</button>
@@ -181,6 +204,33 @@
         </div>
         <button class="btn btn-outline" style="margin-bottom: 2rem;" onclick="adminApp.addExperience()">+ Add Entry</button><br>
         <button class="btn save-btn" data-section="experience">Save Changes</button>
+      </div>
+
+      <!-- Resume Section -->
+      <div id="sec-resume" class="section-view">
+        <h1>Resume Management</h1>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Upload a new resume PDF. It will replace the current one and be available for download on your portfolio.</p>
+        
+        <div class="resume-current" id="resume-current-info">
+          <div>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">Current Resume:</span>
+            <a href="" id="resume-current-link" target="_blank" style="margin-left: 0.5rem;">View Current Resume</a>
+          </div>
+        </div>
+
+        <div class="resume-upload-area" id="resume-upload-area" onclick="document.getElementById('resume-file-input').click();">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+          <strong>Click to select or drag & drop your resume PDF</strong>
+          <p>Only PDF files are accepted (max 10MB)</p>
+        </div>
+        <input type="file" id="resume-file-input" accept=".pdf" style="display: none;">
+        
+        <div id="resume-selected-info" style="display: none; background: var(--surface); padding: 1rem; border-radius: 6px; border: 1px solid var(--accent); margin-bottom: 1.5rem;">
+          <span id="resume-selected-name" style="color: var(--accent);"></span>
+          <span id="resume-selected-size" style="color: var(--text-muted); margin-left: 1rem;"></span>
+        </div>
+
+        <button class="btn" id="resume-upload-btn" style="margin-bottom: 1rem;" disabled>Upload Resume</button>
       </div>
 
       <!-- Site Settings Section -->

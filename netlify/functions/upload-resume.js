@@ -1,4 +1,4 @@
-// netlify/functions/save.js
+// netlify/functions/upload-resume.js
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -16,37 +16,30 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { password, content } = JSON.parse(event.body);
+    const { password, fileBase64, fileName } = JSON.parse(event.body);
 
-    if (!process.env.ADMIN_PASSWORD) {
-      console.error("ADMIN_PASSWORD environment variable is not set.");
-      return {
-        statusCode: 500,
-        headers,
-        body: JSON.stringify({ error: "Server configuration error: ADMIN_PASSWORD not set. Please add it in Netlify → Site Settings → Environment Variables." })
-      };
-    }
-
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
       return { statusCode: 401, headers, body: JSON.stringify({ error: "Unauthorized" }) };
     }
 
     if (!process.env.GITHUB_TOKEN) {
-      console.error("GITHUB_TOKEN environment variable is not set.");
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: "Server configuration error: GITHUB_TOKEN not set. Please add a GitHub Personal Access Token (with repo scope) in Netlify → Site Settings → Environment Variables." })
+        body: JSON.stringify({ error: "Server configuration error: GITHUB_TOKEN not set." })
       };
     }
 
-    // 1. Get the current file's SHA (required by GitHub API to update a file)
+    if (!fileBase64) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "No file data provided" }) };
+    }
+
     const repoOwner = "ishaansahu22";
     const repoName = "Portfolio_Main";
-    const filePath = "content.json";
-    
+    const filePath = `assets/${fileName || 'resume.pdf'}`;
     const apiUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
-    
+
+    // 1. Get current file SHA if it exists
     let currentSha = null;
     try {
       const getFileRes = await fetch(apiUrl, {
@@ -60,16 +53,13 @@ exports.handler = async (event, context) => {
         currentSha = fileData.sha;
       }
     } catch (e) {
-      console.log("Error fetching current file, it might not exist yet:", e);
+      console.log("File doesn't exist yet, creating new:", e);
     }
 
-    // 2. Base64 encode the new content
-    const base64Content = Buffer.from(JSON.stringify(content, null, 2)).toString('base64');
-
-    // 3. Update the file
+    // 2. Upload/update file
     const putBody = {
-      message: 'chore: update content via admin panel',
-      content: base64Content
+      message: `chore: update resume (${fileName || 'resume.pdf'})`,
+      content: fileBase64
     };
     if (currentSha) putBody.sha = currentSha;
 
@@ -89,17 +79,17 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 500,
         headers,
-        body: JSON.stringify({ error: `Failed to update GitHub repository. GitHub returned: ${putRes.status}. Check that your GITHUB_TOKEN has 'repo' scope and is not expired.` })
+        body: JSON.stringify({ error: `Failed to upload resume. GitHub returned: ${putRes.status}` })
       };
     }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, message: "Saved — deploying in ~30s" }),
+      body: JSON.stringify({ success: true, message: "Resume uploaded — deploying in ~30s", path: filePath }),
     };
   } catch (err) {
-    console.error("Save Function Error:", err);
+    console.error("Upload Resume Error:", err);
     return {
       statusCode: 400,
       headers,

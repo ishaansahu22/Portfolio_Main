@@ -1,6 +1,6 @@
 [build]
   functions = "netlify/functions"
-  publish = "." # Serves index.html from root of this repo mapping (which will be inside portfolio folder when deployed)
+  publish = "."
 
 [[redirects]]
   from = "/admin"

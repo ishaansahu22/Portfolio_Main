@@ -3,6 +3,7 @@ const adminApp = (() => {
   let ghRepos = [];
   let token = sessionStorage.getItem('adminToken');
   let password = sessionStorage.getItem('adminPassword');
+  let selectedResumeFile = null;
 
   const DOM = {
     login: document.getElementById('login-screen'),
@@ -29,6 +30,7 @@ const adminApp = (() => {
       try {
         const res = await fetch('/api/auth', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: pwd })
         });
         const data = await res.json();
@@ -41,6 +43,7 @@ const adminApp = (() => {
           showDashboard();
           await loadData();
         } else {
+          DOM.error.textContent = data.error || "Invalid password";
           DOM.error.style.display = 'block';
         }
       } catch (err) {
@@ -73,6 +76,9 @@ const adminApp = (() => {
     DOM.saveBtns.forEach(btn => {
       btn.addEventListener('click', () => saveSection(btn.dataset.section));
     });
+
+    // Resume upload handlers
+    initResumeUpload();
   }
 
   function showDashboard() {
@@ -101,6 +107,7 @@ const adminApp = (() => {
       populateSkills();
       populateExperience();
       populateSettings();
+      populateResume();
     } catch(e) {
       showToast("Failed to load data", true);
     }
@@ -294,6 +301,132 @@ const adminApp = (() => {
     document.getElementById('set-footer').value = content.siteSettings.footerText || '';
   }
 
+  function populateResume() {
+    const link = document.getElementById('resume-current-link');
+    if (link) {
+      const resumeUrl = content.identity?.resumeUrl || 'assets/resume.pdf';
+      link.href = '/' + resumeUrl;
+      link.textContent = resumeUrl;
+    }
+  }
+
+  // --- Resume Upload ---
+
+  function initResumeUpload() {
+    const uploadArea = document.getElementById('resume-upload-area');
+    const fileInput = document.getElementById('resume-file-input');
+    const uploadBtn = document.getElementById('resume-upload-btn');
+
+    if (!uploadArea || !fileInput || !uploadBtn) return;
+
+    // Drag & drop
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file) handleResumeFile(file);
+    });
+
+    // File input change
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleResumeFile(fileInput.files[0]);
+    });
+
+    // Upload button
+    uploadBtn.addEventListener('click', () => uploadResume());
+  }
+
+  function handleResumeFile(file) {
+    if (file.type !== 'application/pdf') {
+      showToast('Only PDF files are accepted', true);
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('File too large (max 10MB)', true);
+      return;
+    }
+
+    selectedResumeFile = file;
+    
+    const infoEl = document.getElementById('resume-selected-info');
+    const nameEl = document.getElementById('resume-selected-name');
+    const sizeEl = document.getElementById('resume-selected-size');
+    
+    nameEl.textContent = `📄 ${file.name}`;
+    sizeEl.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+    infoEl.style.display = 'block';
+
+    document.getElementById('resume-upload-btn').disabled = false;
+  }
+
+  async function uploadResume() {
+    if (!selectedResumeFile) {
+      showToast('No file selected', true);
+      return;
+    }
+
+    const uploadBtn = document.getElementById('resume-upload-btn');
+    uploadBtn.textContent = 'Uploading...';
+    uploadBtn.disabled = true;
+
+    try {
+      // Read file as base64
+      const base64 = await fileToBase64(selectedResumeFile);
+
+      const res = await fetch('/api/upload-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          password,
+          fileBase64: base64,
+          fileName: 'resume.pdf'
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        showToast(data.message || 'Resume uploaded successfully');
+        
+        // Update content.json resume URL too
+        content.identity.resumeUrl = 'assets/resume.pdf';
+        await saveSection('identity');
+        
+        selectedResumeFile = null;
+        document.getElementById('resume-selected-info').style.display = 'none';
+        document.getElementById('resume-file-input').value = '';
+        populateResume();
+      } else {
+        showToast(data.error || 'Failed to upload resume', true);
+      }
+    } catch (e) {
+      showToast('Network error: ' + e.message, true);
+    }
+
+    uploadBtn.textContent = 'Upload Resume';
+    uploadBtn.disabled = false;
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Remove the data:...;base64, prefix
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   // --- Save ---
 
   async function saveSection(section) {
@@ -354,9 +487,12 @@ const adminApp = (() => {
     // Call API
     try {
       const btn = document.querySelector(`.save-btn[data-section="${section}"]`);
-      const originalText = btn.textContent;
-      btn.textContent = 'Saving...';
-      btn.disabled = true;
+      let originalText = 'Save Changes';
+      if (btn) {
+        originalText = btn.textContent;
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+      }
 
       const res = await fetch('/api/save', {
         method: 'POST',
@@ -377,8 +513,10 @@ const adminApp = (() => {
         }
       }
 
-      btn.textContent = originalText;
-      btn.disabled = false;
+      if (btn) {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
     } catch(e) {
       showToast("Network error", true);
     }

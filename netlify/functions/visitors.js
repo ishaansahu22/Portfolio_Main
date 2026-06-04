@@ -1,20 +1,43 @@
 // netlify/functions/visitors.js
 
 exports.handler = async (event, context) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   try {
     const { password } = JSON.parse(event.body || '{}');
 
-    if (!process.env.ADMIN_PASSWORD || password !== process.env.ADMIN_PASSWORD) {
-      return { statusCode: 401, body: JSON.stringify({ error: "Unauthorized" }) };
+    if (!process.env.ADMIN_PASSWORD) {
+      console.error("ADMIN_PASSWORD environment variable is not set.");
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: "Server configuration error: ADMIN_PASSWORD not set. Please add it in Netlify → Site Settings → Environment Variables." })
+      };
+    }
+
+    if (password !== process.env.ADMIN_PASSWORD) {
+      return { statusCode: 401, headers, body: JSON.stringify({ error: "Unauthorized" }) };
     }
 
     if (!process.env.GITHUB_TOKEN) {
       console.error("GITHUB_TOKEN is not set.");
-      return { statusCode: 500, body: JSON.stringify({ error: "Server configuration error" }) };
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ error: "Server configuration error: GITHUB_TOKEN not set. Please add a GitHub Personal Access Token (with repo scope) in Netlify → Site Settings → Environment Variables." })
+      };
     }
 
     const repoOwner = "ishaansahu22";
@@ -43,13 +66,14 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ success: true, logs })
     };
   } catch (err) {
     console.error("Visitors Function Error:", err);
     return {
       statusCode: 400,
+      headers,
       body: JSON.stringify({ error: "Invalid request" })
     };
   }

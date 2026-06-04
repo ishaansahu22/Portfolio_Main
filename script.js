@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initPageNavigation();
     initMobileNav();
     initHeroCanvas();
+    initContactForm();
 
     // Show starting page
     showPage(window.location.hash || '#hero');
@@ -287,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ========================================================== */
   async function fetchContent() {
     const fallback = {
-      identity: { name: 'Ishaan Sahu', tagline: 'Software Engineer & Developer', bio: 'Welcome to my portfolio.', roles: ['Developer', 'Engineer'], github: 'https://github.com/ishaansahu22', linkedin: '', email: '' },
+      identity: { name: 'Ishaan Sahu', tagline: 'Software Engineer & Developer', bio: 'Welcome to my portfolio.', roles: ['Developer', 'Engineer'], github: 'https://github.com/ishaansahu22', linkedin: '', email: '', resumeUrl: 'assets/resume.pdf' },
       skills: { 'Languages': ['JavaScript', 'Python'] },
       pinnedProjects: [], hiddenRepos: [],
       experience: [],
@@ -309,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function initSite(data) {
     try { populateHero(data.identity); } catch(e){ console.warn(e); }
     try { populateAbout(data.identity); } catch(e){ console.warn(e); }
+    try { populateResume(data.identity); } catch(e){ console.warn(e); }
     try { populateSkills(data.skills); } catch(e){ console.warn(e); }
     try { populateProjects(data.pinnedProjects, data.hiddenRepos); } catch(e){ console.warn(e); }
     try { populateExperience(data.experience); } catch(e){ console.warn(e); }
@@ -341,10 +343,29 @@ document.addEventListener('DOMContentLoaded', () => {
     else { badge.style.display = 'none'; }
     document.getElementById('hero-subtext').textContent = id.tagline;
     document.getElementById('hero-socials').innerHTML = getSocialHTML(id);
+
+    // Update hero resume button
+    const heroResumeBtn = document.getElementById('hero-resume-btn');
+    if (heroResumeBtn && id.resumeUrl) {
+      heroResumeBtn.href = id.resumeUrl;
+    }
   }
 
   function populateAbout(id) {
     document.getElementById('about-bio').innerHTML = id.bio;
+    
+    // Update photo if a custom photo path is set
+    if (id.photo) {
+      const photoEl = document.getElementById('avatar-photo');
+      if (photoEl) photoEl.src = id.photo;
+    }
+  }
+
+  function populateResume(id) {
+    const resumeLink = document.getElementById('resume-download-link');
+    if (resumeLink && id.resumeUrl) {
+      resumeLink.href = id.resumeUrl;
+    }
   }
 
   function populateSkills(skills) {
@@ -382,21 +403,74 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) return;
       const repos = await res.json();
       const pinnedNames = pinned.map(p => p.repo);
-      repos.forEach(repo => {
+      
+      // Process repos with README fetching for those without descriptions
+      for (const repo of repos) {
         if (pinnedNames.includes(repo.name)) {
           const el = document.getElementById(`lang-${repo.name}`);
           if (el) el.textContent = repo.language || 'Code';
-          return;
+          continue;
         }
-        if (hidden.includes(repo.name)) return;
+        if (hidden.includes(repo.name)) continue;
+        
+        let description = repo.description || '';
+        
+        // If no description, try to fetch README
+        if (!description) {
+          description = await fetchRepoDescription(repo.full_name);
+        }
+        
         ac.insertAdjacentHTML('beforeend', `
           <a href="${repo.html_url}" target="_blank" class="small-card">
             <div class="small-card-title">${repo.name}<span>↗</span></div>
-            <p class="small-card-desc">${repo.description || 'No description.'}</p>
+            <p class="small-card-desc">${description || 'No description.'}</p>
             <div class="small-card-meta"><span>${repo.language || '—'}</span><span>⭐ ${repo.stargazers_count}</span></div>
           </a>`);
-      });
+      }
     } catch (e) { console.warn('GH API error', e); }
+  }
+
+  /**
+   * Fetch the first meaningful paragraph from a repo's README
+   */
+  async function fetchRepoDescription(fullName) {
+    try {
+      const res = await fetch(`https://api.github.com/repos/${fullName}/readme`, {
+        headers: { 'Accept': 'application/vnd.github.v3+json' }
+      });
+      if (!res.ok) return '';
+      
+      const data = await res.json();
+      const content = atob(data.content);
+      
+      // Extract first meaningful paragraph (skip headings, badges, blank lines)
+      const lines = content.split('\n');
+      let description = '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Skip empty lines, headings, badges/images, HTML tags, separators
+        if (!trimmed) continue;
+        if (trimmed.startsWith('#')) continue;
+        if (trimmed.startsWith('![')) continue;
+        if (trimmed.startsWith('<')) continue;
+        if (trimmed.startsWith('---') || trimmed.startsWith('===')) continue;
+        if (trimmed.startsWith('[![')) continue;
+        if (trimmed.startsWith('```')) continue;
+        
+        // Found a text paragraph
+        description = trimmed;
+        break;
+      }
+      
+      // Truncate if too long
+      if (description.length > 150) {
+        description = description.substring(0, 147) + '...';
+      }
+      
+      return description;
+    } catch (e) {
+      return '';
+    }
   }
 
   function populateExperience(exp) {
@@ -439,6 +513,53 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* ==========================================================
+     CONTACT FORM — AJAX SUBMISSION
+  ========================================================== */
+  function initContactForm() {
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('contact-submit-btn');
+      const msgEl = document.getElementById('form-message');
+      const originalText = submitBtn.textContent;
+
+      submitBtn.textContent = 'Sending...';
+      submitBtn.disabled = true;
+      msgEl.className = 'form-message';
+      msgEl.style.display = 'none';
+
+      try {
+        const formData = new FormData(form);
+        const res = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(formData).toString()
+        });
+
+        if (res.ok) {
+          msgEl.textContent = '✓ Message sent successfully! I\'ll get back to you soon.';
+          msgEl.className = 'form-message success';
+          msgEl.style.display = 'block';
+          form.reset();
+        } else {
+          throw new Error(`Server returned ${res.status}`);
+        }
+      } catch (err) {
+        console.error('Form submission error:', err);
+        msgEl.textContent = '✗ Something went wrong. Please try emailing me directly.';
+        msgEl.className = 'form-message error';
+        msgEl.style.display = 'block';
+      }
+
+      submitBtn.textContent = originalText;
+      submitBtn.disabled = false;
+    });
+  }
+
+  /* ==========================================================
      TYPEWRITER
   ========================================================== */
   function initTypewriter(roles) {
@@ -470,6 +591,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.querySelector('.logo').addEventListener('click', e => { e.preventDefault(); showPage('#hero'); });
     document.querySelectorAll('.hero-ctas a').forEach(b => {
+      // Don't intercept the resume download link (it has target="_blank")
+      if (b.getAttribute('target') === '_blank') return;
       b.addEventListener('click', e => { e.preventDefault(); showPage(b.getAttribute('href')); });
     });
     window.addEventListener('popstate', () => showPage(window.location.hash || '#hero'));
@@ -489,7 +612,17 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => { it.classList.add('visible'); updateFill(); }, i * 180);
         });
       }
-      if (hash === '#about') triggerStats();
+      if (hash === '#about') {
+        triggerStats();
+        // Also show resume section since it follows About
+        const resumeSection = document.getElementById('resume');
+        if (resumeSection) {
+          resumeSection.classList.add('page-active');
+          resumeSection.querySelectorAll('.reveal:not(.active)').forEach((el, i) => {
+            setTimeout(() => el.classList.add('active'), i * 100 + 200);
+          });
+        }
+      }
     }
     document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
     const al = document.querySelector(`.nav-links a[href="${hash}"]`);

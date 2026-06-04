@@ -65,6 +65,7 @@
       <div class="hero-ctas">
         <a href="#projects" class="btn btn-primary">View My Projects</a>
         <a href="#contact" class="btn btn-outline">Get in Touch</a>
+        <a href="assets/resume.pdf" target="_blank" class="btn btn-outline" id="hero-resume-btn">Download Resume</a>
       </div>
       <div class="social-row" id="hero-socials"></div>
     </div>
@@ -78,7 +79,8 @@
           <div class="avatar-container">
             <div class="avatar-ring inner-ring"></div>
             <div class="avatar-ring outer-ring"></div>
-            <div class="avatar-placeholder">IS</div>
+            <img src="assets/photo.jpg" alt="Ishaan Sahu" class="avatar-photo" id="avatar-photo" onerror="this.style.display='none'; document.getElementById('avatar-fallback').style.display='flex';">
+            <div class="avatar-placeholder" id="avatar-fallback" style="display:none;">IS</div>
           </div>
         </div>
         <div class="about-text">
@@ -90,8 +92,23 @@
             <div class="stat-item"><span class="stat-number" data-target="5">0</span><span>+</span><div class="stat-label">Projects Built</div></div>
             <div class="stat-item"><span class="stat-number" data-target="3">0</span><span>+</span><div class="stat-label">Internships</div></div>
           </div>
-          <a href="assets/resume.pdf" target="_blank" class="btn btn-outline">Download Resume</a>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RESUME ===== -->
+  <section id="resume" class="resume-section page-section">
+    <div class="container reveal">
+      <div class="resume-card">
+        <div class="resume-info">
+          <h3>📄 My Resume</h3>
+          <p>Download my latest resume to learn more about my experience and qualifications.</p>
+        </div>
+        <a href="assets/resume.pdf" target="_blank" class="resume-download-btn" id="resume-download-link">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          Download Resume
+        </a>
       </div>
     </div>
   </section>
@@ -132,12 +149,14 @@
       <div class="contact-links-grid" id="contact-links-grid"></div>
       <div class="contact-divider"><span>or send a message</span></div>
       <div class="contact-form-container">
-        <form name="contact" method="POST" data-netlify="true" class="contact-form">
+        <form id="contact-form" class="contact-form" name="contact" method="POST" data-netlify="true" action="/">
+          <input type="hidden" name="form-name" value="contact">
           <div class="form-group"><input type="text" name="name" required placeholder="Your Name"></div>
           <div class="form-group"><input type="email" name="email" required placeholder="Your Email"></div>
           <div class="form-group"><textarea name="message" required placeholder="Your Message" rows="5"></textarea></div>
-          <button type="submit" class="btn btn-primary btn-submit">Send Message</button>
+          <button type="submit" class="btn btn-primary btn-submit" id="contact-submit-btn">Send Message</button>
         </form>
+        <div id="form-message" class="form-message"></div>
       </div>
     </div>
   </section>

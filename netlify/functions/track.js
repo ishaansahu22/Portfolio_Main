@@ -1,9 +1,19 @@
 // netlify/functions/track.js
 
 exports.handler = async (event, context) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
   // Silent tracking should support simple requests from any source, but we only record if it's a POST
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 200, body: JSON.stringify({ status: "ok" }) };
+    return { statusCode: 200, headers, body: JSON.stringify({ status: "ok" }) };
   }
 
   try {
@@ -27,7 +37,7 @@ exports.handler = async (event, context) => {
     if (!process.env.GITHUB_TOKEN) {
       console.error("GITHUB_TOKEN is not set, tracking locally logged only.");
       console.log("Visit Logged:", visitRecord);
-      return { statusCode: 200, body: JSON.stringify({ success: true }) };
+      return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
     }
 
     const repoOwner = "ishaansahu22";
@@ -85,7 +95,7 @@ exports.handler = async (event, context) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ success: true })
     };
   } catch (err) {
@@ -93,6 +103,7 @@ exports.handler = async (event, context) => {
     // Return innocuous status ok anyway to avoid revealing issues or interrupting user flow
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ success: true })
     };
   }
