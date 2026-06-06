@@ -42,14 +42,10 @@
       ]
     },
     {
-      "repo": "riskbound-ai",
+      "repo": "RiskBound-AI-Conformal-Health-Risk-Prediction",
       "rank": 3,
-      "overrideDescription": "Conformal Prediction framework using MAPIE for calibrated ML inference on patient vitals with real-time Streamlit dashboard.",
-      "highlights": [
-        "Uncertainty quantification",
-        "XGBoost + MAPIE",
-        "Interactive Altair visualizations"
-      ]
+      "overrideDescription": "",
+      "highlights": []
     }
   ],
   "hiddenRepos": [],
