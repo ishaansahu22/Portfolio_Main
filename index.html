@@ -149,8 +149,9 @@
       <div class="contact-links-grid" id="contact-links-grid"></div>
       <div class="contact-divider"><span>or send a message</span></div>
       <div class="contact-form-container">
-        <form id="contact-form" class="contact-form" name="contact" method="POST" data-netlify="true" action="/">
+        <form id="contact-form" class="contact-form" name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field">
           <input type="hidden" name="form-name" value="contact">
+          <p class="hidden" style="display:none;"><label>Don't fill this out: <input name="bot-field"></label></p>
           <div class="form-group"><input type="text" name="name" required placeholder="Your Name"></div>
           <div class="form-group"><input type="email" name="email" required placeholder="Your Email"></div>
           <div class="form-group"><textarea name="message" required placeholder="Your Message" rows="5"></textarea></div>

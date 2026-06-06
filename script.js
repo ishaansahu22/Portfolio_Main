@@ -533,10 +533,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const formData = new FormData(form);
+        const body = new URLSearchParams(formData).toString();
         const res = await fetch('/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(formData).toString()
+          body: body
         });
 
         if (res.ok) {
