@@ -1,5 +1,12 @@
 [
   {
+    "ip": "183.82.30.209, 54.254.229.208",
+    "page": "#hero",
+    "referrer": "",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "timestamp": "2026-06-13T08:39:32.568Z"
+  },
+  {
     "ip": "2402:8100:2782:350:516d:de72:223b:ee9b, 54.255.18.136",
     "page": "#hero",
     "referrer": "",
