@@ -1,5 +1,12 @@
 [
   {
+    "ip": "2406:7400:bb:6d1b:71f6:27e4:18ea:656, 54.255.18.136",
+    "page": "#hero",
+    "referrer": "",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "timestamp": "2026-06-18T00:20:42.718Z"
+  },
+  {
     "ip": "2406:7400:bb:e166:1da9:bc22:719c:d4c5, 52.220.242.38",
     "page": "#hero",
     "referrer": "",
